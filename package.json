@@ -5,9 +5,20 @@
   "name": "wanderlust",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest --runInBand",
+    "start": "node server.js",
+    "test:component": "jest tests/component --runInBand",
+    "test:integration": "jest tests/integration --runInBand",
+    "test:system": "jest tests/system --runInBand",
+    "test:acceptance": "jest tests/acceptance --runInBand",
+    "test:performance": "jest tests/performance --runInBand",
+    "test:security": "jest tests/security --runInBand",
+    "test:whitebox": "jest tests/whitebox --runInBand",
+    "test:blackbox": "jest tests/blackbox --runInBand",
+    "test:all": "jest --runInBand",
+    "test:coverage": "jest --coverage --runInBand"
   },
   "keywords": [],
   "author": "",
@@ -26,10 +37,15 @@
     "joi": "^17.13.1",
     "method-override": "^3.0.0",
     "mongoose": "^8.4.0",
-    "multer": "^1.4.5-lts.1",
     "multer-storage-cloudinary": "^4.0.0",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
     "passport-local-mongoose": "^8.0.0"
+  },
+  "devDependencies": {
+    "jest": "^30.5.2",
+    "mongodb-memory-server": "^11.3.0",
+    "multer": "^2.4.0",
+    "supertest": "^7.3.0"
   }
 }

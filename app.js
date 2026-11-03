@@ -29,33 +29,38 @@ app.use(express.urlencoded({ extended: true }));
 
 const dbUrl = process.env.ATLASDB_URL;
 
-main()
-  .then(() => {
-    console.log("connected to DB");
-  })
-  .catch((err) => {
-    console.log(err);
-  });
+async function startServer() {
+  let url = process.env.ATLASDB_URL;
+  if (!url || url.trim() === "") {
+    console.log("🟡 No MongoDB Atlas URL found — starting in-memory MongoDB...");
+    const { MongoMemoryServer } = require("mongodb-memory-server");
+    const mongod = await MongoMemoryServer.create();
+    url = mongod.getUri();
+    process.env.ATLASDB_URL = url;
+    console.log(`✅ In-memory MongoDB running at: ${url}`);
 
-async function main() {
-  await mongoose.connect(dbUrl);
+    process.on("SIGINT", async () => {
+      await mongod.stop();
+      process.exit(0);
+    });
+
+    await mongoose.connect(url);
+    const seedDatabase = require("./utils/seed");
+    await seedDatabase();
+  } else {
+    await mongoose.connect(url);
+    console.log("connected to DB");
+  }
+
+  const port = process.env.PORT || 8080;
+  app.listen(port, () => {
+    console.log(`Listening on port ${port}`);
+  });
 }
 
-const store = MongoStore.create({
-  mongoUrl: dbUrl,
-  crypto: {
-    secret: process.env.SECRET,
-  },
-  touchAfter: 24 * 3600,
-});
-
-store.on("error", () => {
-  console.log("ERROR in MONGO SESSION STORE", err);
-});
 
 const sessionOptions = {
-  store,
-  secret: process.env.SECRET,
+  secret: process.env.SECRET || "thisshouldbeabettersecret!",
   resave: false,
   saveUninitialized: true,
   cookie: {
@@ -64,6 +69,22 @@ const sessionOptions = {
     httpOnly: true,
   },
 };
+
+if (process.env.NODE_ENV !== "test" && dbUrl) {
+  const store = MongoStore.create({
+    mongoUrl: dbUrl,
+    crypto: {
+      secret: process.env.SECRET || "thisshouldbeabettersecret!",
+    },
+    touchAfter: 24 * 3600,
+  });
+
+  store.on("error", (err) => {
+    console.log("ERROR in MONGO SESSION STORE", err);
+  });
+
+  sessionOptions.store = store;
+}
 
 app.use(session(sessionOptions));
 app.use(flash());
@@ -106,6 +127,10 @@ app.use((err, req, res, next) => {
 });
 
 
-app.listen(8080, () => {
-  console.log("Listening on port 8080");
-});
+if (process.env.NODE_ENV !== "test") {
+  startServer().catch((err) => {
+    console.error("Failed to start server:", err);
+  });
+}
+
+module.exports = app;

@@ -17,7 +17,7 @@
                     <div class="listing-card-body mt-3">
                         <p class="listing-card-text">
                             <b>Hosted By: </b><i>
-                                <%= listing.owner.username %>
+                                <%= (listing.owner && listing.owner.username) ? listing.owner.username : "TraveLogia Host" %>
                             </i>
                         </p>
                         <p class="listing-card-text">
@@ -47,7 +47,7 @@
                         <button class="btn btn-success reserve-btn">Reserve</button>
                     </form>
                 </div>
-                <% if(currUser && currUser._id.equals(listing.owner._id)){ %>
+                <% if(currUser && listing.owner && currUser._id.equals(listing.owner._id)){ %>
                     <div class="show-btns d-flex flex-column flex-md-row justify-content-center gap-2 gap-md-3 mt-3">
                         <a href="/listings/<%= listing._id %>/edit" class="btn btn-danger mb-2 mb-md-0">Edit this
                             Listing</a>
@@ -113,7 +113,7 @@
                                                                     <i class="fa-solid fa-circle-user fa-lg"
                                                                         style="color: #ff0000;">&nbsp;</i>
                                                                     <i>
-                                                                        <%= review.author.username %>
+                                                                        <%= (review.author && review.author.username) ? review.author.username : "Anonymous Traveler" %>
                                                                     </i>
                                                                 </h5>
                                                                 <p class="starability-result card-text"
@@ -122,7 +122,7 @@
                                                                     <%= review.comment %>
                                                                 </p>
                                                             </div>
-                                                            <% if(currUser && currUser._id.equals(review.author._id)){
+                                                            <% if(currUser && review.author && currUser._id.equals(review.author._id)){
                                                                 %>
                                                                 <form
                                                                     action="/listings/<%=listing._id%>/reviews/<%=review._id%>?_method=DELETE"

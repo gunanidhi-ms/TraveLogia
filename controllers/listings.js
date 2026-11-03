@@ -1,7 +1,28 @@
 const Listing = require("../models/listing");
 const mbxGeocoding = require("@mapbox/mapbox-sdk/services/geocoding");
-const mapToken = process.env.MAP_TOKEN;
-const geoCodingClient = mbxGeocoding({ accessToken: mapToken });
+
+// Lazy-initialize geocoding client so app starts even without MAP_TOKEN
+let geoCodingClient = null;
+function getGeoCodingClient() {
+  if (!geoCodingClient) {
+    const mapToken = process.env.MAP_TOKEN;
+    if (mapToken) {
+      geoCodingClient = mbxGeocoding({ accessToken: mapToken });
+    }
+  }
+  return geoCodingClient;
+}
+
+// Dummy geometry used when no MAP_TOKEN is available
+const DUMMY_GEOMETRY = { type: "Point", coordinates: [0, 0] };
+
+async function geocode(query) {
+  const client = getGeoCodingClient();
+  if (!client) return DUMMY_GEOMETRY;
+  const response = await client.forwardGeocode({ query, limit: 1 }).send();
+  return response.body.features[0]?.geometry || DUMMY_GEOMETRY;
+}
+
 
 module.exports.index = async (req, res) => {
   let allListings = await Listing.find();
@@ -25,20 +46,15 @@ module.exports.showListing = async (req, res) => {
 };
 
 module.exports.createListing = async (req, res, next) => {
-  let response = await geoCodingClient
-    .forwardGeocode({
-      query: req.body.listing.location,
-      limit: 1,
-    })
-    .send();
+  const geometry = await geocode(req.body.listing.location);
 
-  let url = req.file.path;
-  let filename = req.file.filename;
+  let url = req.file ? req.file.path : "https://images.unsplash.com/photo-1501785888041-af3ef285b470";
+  let filename = req.file ? req.file.filename : "default";
 
   const newListing = new Listing(req.body.listing);
   newListing.owner = req.user._id;
   newListing.image = { filename, url };
-  newListing.geometry = response.body.features[0].geometry;
+  newListing.geometry = geometry;
   await newListing.save();
   req.flash("success", "New listing created!");
   res.redirect("/listings");
@@ -58,19 +74,14 @@ module.exports.renderEditForm = async (req, res) => {
 
 module.exports.updateListing = async (req, res, next) => {
   let { id } = req.params;
-  let response = await geoCodingClient
-    .forwardGeocode({
-      query: ` ${req.body.listing.location},${req.body.listing.country}`,
-      limit: 1,
-    })
-    .send();
+  const geometry = await geocode(`${req.body.listing.location},${req.body.listing.country}`);
 
-  req.body.listing.geometry = response.body.features[0].geometry;
+  req.body.listing.geometry = geometry;
   let updatedListing = await Listing.findByIdAndUpdate(id, {
     ...req.body.listing,
   });
 
-  if (typeof req.file !== "undefined") {
+  if (req.file) {
     let url = req.file.path;
     let filename = req.file.filename;
     updatedListing.image = { url, filename };
@@ -96,7 +107,7 @@ module.exports.search = async (req, res) => {
   let input = req.query.q.trim().replace(/\s+/g, " ");
   if (input == "" || input == " ") {
     req.flash("error", "Please enter search query!");
-    res.redirect("/listings");
+    return res.redirect("/listings");
   }
 
   let data = input.split("");
