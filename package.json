@@ -18,7 +18,8 @@
     "test:whitebox": "jest tests/whitebox --runInBand",
     "test:blackbox": "jest tests/blackbox --runInBand",
     "test:all": "jest --runInBand",
-    "test:coverage": "jest --coverage --runInBand"
+    "test:coverage": "jest --coverage --runInBand",
+    "metrics": "node scripts/metrics.js"
   },
   "keywords": [],
   "author": "",

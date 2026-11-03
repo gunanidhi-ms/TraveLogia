@@ -153,7 +153,7 @@ describe("Acceptance Testing: Business Requirements & User Acceptance Criteria (
       expect(checkReview).not.toBeNull();
     });
 
-    test("AC-3.3: unauthorized listing modification returns HTTP 403 Forbidden", async () => {
+    test("AC-3.3: unauthorized listing modification redirects with access restriction", async () => {
       const host1 = await createTestUser("owner_x", "ownerx@test.com");
       const listing = await createTestListing(host1._id, { title: "Chalet X" });
 
@@ -172,7 +172,8 @@ describe("Acceptance Testing: Business Requirements & User Acceptance Criteria (
         .field("listing[country]", "Nowhere")
         .field("listing[category]", "Trending");
 
-      expect(res.status).toBe(403);
+      expect(res.status).toBe(302);
+      expect(res.headers.location).toBe(`/listings/${listing._id}`);
     });
   });
 

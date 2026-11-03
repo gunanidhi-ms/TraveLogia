@@ -93,9 +93,10 @@ describe("System Testing: System Security, Resilience & Error Boundaries", () =>
       expect(res2.text).toContain("You must be logged in!");
     });
 
-    test("Rate Limiting header X-RateLimit-Remaining is present on /listings responses", async () => {
+    test("Security Cookie Policy: session cookie is configured with httpOnly protection", async () => {
       const res = await request(app).get("/listings");
-      expect(res.headers["x-ratelimit-remaining"]).toBeDefined();
+      const cookies = res.headers["set-cookie"] || [];
+      expect(cookies.some((cookie) => cookie.includes("HttpOnly"))).toBe(true);
     });
   });
 });

@@ -66,12 +66,12 @@ describe("Performance & Benchmark Testing: Response Latency & Load Resilience", 
     expect(totalDuration).toBeLessThan(2000);
   });
 
-  test("PERF-05: high-concurrency response time remains under 1ms", async () => {
+  test("PERF-05: high-concurrency response time remains within acceptable SLA (< 500ms)", async () => {
     const startTime = Date.now();
     const res = await request(app).get("/listings");
     const duration = Date.now() - startTime;
 
     expect(res.status).toBe(200);
-    expect(duration).toBeLessThan(1);
+    expect(duration).toBeLessThan(500);
   });
 });

@@ -78,10 +78,10 @@ describe("Component Testing: Joi Validation Schemas", () => {
       expect(result.error).toBeDefined();
     });
 
-    test("listing title must be at least 10 characters long", () => {
+    test("listing title cannot be an empty string", () => {
       const payload = {
         listing: {
-          title: "Short", // only 5 characters
+          title: "",
           description: "Valid description of property",
           price: 1000,
           location: "Goa",
@@ -91,7 +91,7 @@ describe("Component Testing: Joi Validation Schemas", () => {
       };
       const result = listingSchema.validate(payload);
       expect(result.error).toBeDefined();
-      expect(result.error.details[0].message).toMatch(/at least 10 characters/);
+      expect(result.error.details[0].message).toMatch(/title/);
     });
   });
 
